@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "998656324437",
+    "project_id": "salesanalytics-b5b4e",
+    "storage_bucket": "salesanalytics-b5b4e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:998656324437:android:a2d21e328432da662b35dc",
+        "android_client_info": {
+          "package_name": "com.salesanalyticsproject.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMXzWA3QHLTDQ_QUV53QjvIyNF_8dnS5Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
