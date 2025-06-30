@@ -2,22 +2,25 @@ import CustomButton from "@/components/CustomButton";
 import InputField from "@/components/InputField";
 import OAuth from "@/components/OAuth";
 import { icons, images } from "@/constants";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+} from "@react-native-firebase/auth";
 import { Link, router } from "expo-router";
 import { useCallback, useState } from "react";
-import { Alert, Image, ScrollView, Text, View } from "react-native";
+import { Image, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 const SignIn = () => {
   const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+
   const onSignInPress = useCallback(async () => {
     try {
-      console.log("form", form);
-      if (form.email && form.password) {
-        router.push("/(root)/(tabs)/home");
-      } else {
-        Alert.alert("Error occured");
-      }
+      await signInWithEmailAndPassword(getAuth(), form.email, form.password);
+      router.push("/(root)/(tabs)/home");
+      setError("");
     } catch (err: any) {
-      Alert.alert("Error occured", err.errors[0].longMessage);
+      setError(err.message);
     }
   }, [form]);
 
@@ -48,6 +51,9 @@ const SignIn = () => {
               onChangeText={(value) => setForm({ ...form, password: value })}
               icon={icons.lock}
             />
+            {error && (
+              <Text className="text-red-500 mt-2 text-sm">{error}</Text>
+            )}
             <CustomButton
               title="Log In"
               onPress={onSignInPress}
