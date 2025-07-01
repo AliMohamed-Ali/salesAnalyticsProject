@@ -6,6 +6,7 @@ import {
   createUserWithEmailAndPassword,
   getAuth,
 } from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";
 import { Link, router } from "expo-router";
 import { useState } from "react";
 import { Image, ScrollView, Text, View } from "react-native";
@@ -20,11 +21,17 @@ const SignUp = () => {
   });
   const onSignUpPress = async () => {
     try {
-      await createUserWithEmailAndPassword(
+      const userCredential = await createUserWithEmailAndPassword(
         getAuth(),
         form.email,
         form.password
       );
+      // Create user document in Firestore
+      await firestore().collection("users").doc(userCredential.user.uid).set({
+        name: form.name,
+        email: form.email,
+        createdAt: firestore.FieldValue.serverTimestamp(),
+      });
       setVerification({
         ...verification,
         state: "success",

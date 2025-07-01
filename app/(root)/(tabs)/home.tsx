@@ -60,9 +60,41 @@ export default function HomeAnalytics() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3);
 
+  // Orders in the last hour
+  const now = new Date();
+  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+  const ordersLastHour = orders.filter((order) => {
+    const orderDate = order.timestamp?.seconds
+      ? new Date(order.timestamp.seconds * 1000)
+      : null;
+    return orderDate && orderDate >= oneHourAgo;
+  }).length;
+
+  // Revenue by day for the last 7 days
+  const days: string[] = [];
+  const revenueByDay: Record<string, number> = {};
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    days.push(key);
+    revenueByDay[key] = 0;
+  }
+  orders.forEach((order) => {
+    const orderDate = order.timestamp?.seconds
+      ? new Date(order.timestamp.seconds * 1000)
+      : null;
+    if (orderDate) {
+      const key = orderDate.toISOString().slice(0, 10);
+      if (key in revenueByDay) {
+        revenueByDay[key] += Number(order.price);
+      }
+    }
+  });
+
+
   // --- Recommendation Engine ---
   // 1. Products with fewer than 5 sales in the last 7 days
-  const now = new Date();
   const sevenDaysAgo = new Date(now);
   sevenDaysAgo.setDate(now.getDate() - 7);
 
@@ -108,7 +140,15 @@ export default function HomeAnalytics() {
           <>
             <Text className="text-lg mb-1">
               Total Revenue:{" "}
-              <Text className="font-bold">${totalRevenue.toFixed(2)}</Text>
+              <Text className="font-bold text-primary-500">
+                ${totalRevenue.toFixed(2)}
+              </Text>
+            </Text>
+            <Text className="text-lg mb-1">
+              Orders in the Last Hour:{" "}
+              <Text className="font-bold text-primary-500">
+                {ordersLastHour}
+              </Text>
             </Text>
             <Text className="text-lg mb-1">Top-Selling Products:</Text>
             {topProducts.length === 0 ? (
@@ -121,6 +161,10 @@ export default function HomeAnalytics() {
                 </Text>
               ))
             )}
+            <Text className="text-lg font-bold mt-4 mb-2">
+              Revenue (Last 7 Days)
+            </Text>
+
             <Text className="text-lg font-bold mt-4 mb-2">
               Recommendation Engine
             </Text>

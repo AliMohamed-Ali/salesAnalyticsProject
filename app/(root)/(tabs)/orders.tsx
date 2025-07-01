@@ -15,7 +15,7 @@ interface Order {
   timestamp: { seconds: number; nanoseconds: number };
 }
 
-export default function Orders() {
+export default function Page() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -106,7 +106,7 @@ export default function Orders() {
       : null;
     return (
       <View className="bg-white rounded-lg shadow-sm shadow-neutral-300 mb-3 p-4 flex-row justify-between items-center">
-        <View>
+        <View className="flex-col gap-2 flex-2">
           <Text className="text-lg font-bold">{item.productName}</Text>
           <Text className="text-md font-semibold">
             Quantity: {item.quantity}
@@ -118,14 +118,14 @@ export default function Orders() {
         </View>
         <View className="flex-col gap-2">
           <CustomButton
-            IconLeft={() => <AntDesign name="edit" size={24} color="black" />}
+            IconLeft={() => <AntDesign name="edit" size={18} color="black" />}
             onPress={() => openEditModal(item)}
-            className="w-[50px] h-[50px] rounded-full bg-neutral-200"
+            className="w-11 h-11 rounded-full bg-neutral-200"
           />
           <CustomButton
             onPress={() => handleDelete(item.id)}
-            IconLeft={() => <AntDesign name="delete" size={24} color="white" />}
-            className="w-[50px] h-[50px] rounded-full bg-red-500"
+            IconLeft={() => <AntDesign name="delete" size={18} color="white" />}
+            className="w-11 h-11 rounded-full bg-red-500"
           />
         </View>
       </View>
@@ -138,8 +138,8 @@ export default function Orders() {
         <Text className="text-2xl font-bold">Orders</Text>
         <CustomButton
           onPress={openAddModal}
-          IconLeft={() => <AntDesign name="plus" size={24} color="white" />}
-          className="w-[50px] h-[50px] rounded-full bg-blue-500"
+          IconLeft={() => <AntDesign name="plus" size={18} color="white" />}
+          className="w-11 h-11 rounded-full bg-blue-500"
         />
       </View>
       {loading ? (
@@ -149,6 +149,8 @@ export default function Orders() {
           data={orders}
           keyExtractor={(item) => item.id}
           renderItem={renderOrder}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 100 }}
           ListEmptyComponent={
             <Text className="text-center text-gray-500 text-2xl">
               No orders found.

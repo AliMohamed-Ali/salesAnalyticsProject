@@ -83,18 +83,16 @@ const AddEditOrdersModal = ({
             value={form.price}
             onChangeText={(value) => setForm({ ...form, price: value })}
           />
-          <View className="flex-row justify-end gap-2 mt-4">
+          <View className="gap-3">
+            <CustomButton
+              title={mode === "add" ? "Add" : "Save"}
+              onPress={handleSubmit}
+            />
             <CustomButton
               title="Cancel"
               onPress={onClose}
               bgVariant="outline"
               textVariant="primary"
-              className="w-[100px]"
-            />
-            <CustomButton
-              title={mode === "add" ? "Add" : "Save"}
-              onPress={handleSubmit}
-              className="w-[100px]"
             />
           </View>
         </View>
