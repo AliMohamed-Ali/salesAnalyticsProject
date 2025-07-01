@@ -1,28 +1,17 @@
-import {
-  FirebaseAuthTypes,
-  getAuth,
-  onAuthStateChanged,
-} from "@react-native-firebase/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Redirect } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { Text, View } from "react-native";
 
 const Page = () => {
-  const [initializing, setInitializing] = useState(true);
-  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
-  console.log("user", user);
-  console.log("initializing", initializing);
-  // Handle user state changes
-  function handleAuthStateChanged(user: FirebaseAuthTypes.User | null) {
-    setUser(user);
-    if (initializing) setInitializing(false);
-  }
-  useEffect(() => {
-    const subscriber = onAuthStateChanged(getAuth(), handleAuthStateChanged);
-    return subscriber; // unsubscribe on unmount
-  }, []);
+  const { user, loading } = useAuth();
 
-  if (initializing) {
-    return null;
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <Text className="text-lg text-gray-600">Loading...</Text>
+      </View>
+    );
   }
 
   if (user) {

@@ -1,5 +1,5 @@
 import CustomButton from "@/components/CustomButton";
-import { getAuth, signOut } from "@react-native-firebase/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import firestore from "@react-native-firebase/firestore";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -7,13 +7,12 @@ import { Alert, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const Profile = () => {
+  const { user, signOut } = useAuth();
   const [userName, setUserName] = useState("");
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const auth = getAuth();
-        const user = auth.currentUser;
         if (user) {
           const doc = await firestore().collection("users").doc(user.uid).get();
           if (doc.exists()) {
@@ -25,11 +24,11 @@ const Profile = () => {
       }
     };
     fetchUser();
-  }, []);
+  }, [user]);
 
   const handleLogout = async () => {
     try {
-      await signOut(getAuth());
+      await signOut();
       router.replace("/(auth)/sign-in");
     } catch (error) {
       Alert.alert("Error", "Failed to logout. Please try again.");
@@ -51,6 +50,9 @@ const Profile = () => {
           <Text className="text-lg font-semibold mt-4 text-gray-700">
             {userName || "User"}
           </Text>
+          {user && (
+            <Text className="text-sm text-gray-500 mt-2">{user.email}</Text>
+          )}
         </View>
         <CustomButton
           title="Logout"

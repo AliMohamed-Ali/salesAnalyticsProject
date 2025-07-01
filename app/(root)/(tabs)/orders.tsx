@@ -1,19 +1,12 @@
 import CustomButton from "@/components/CustomButton";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import AddEditOrdersModal from "@/components/orders/AddEditeOrdersModal";
+import { FirebaseService } from "@/services/firebase";
+import { Order, OrderFormData } from "@/types/order";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import firestore from "@react-native-firebase/firestore";
 import { useEffect, useState } from "react";
 import { FlatList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-// Define the order type inline
-interface Order {
-  id: string;
-  productName: string;
-  quantity: string;
-  price: string;
-  timestamp: { seconds: number; nanoseconds: number };
-}
 
 export default function Page() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -28,57 +21,26 @@ export default function Page() {
   } | null>(null);
 
   useEffect(() => {
-    // Real-time listener for orders
-    const unsubscribe = firestore()
-      .collection("Orders")
-      .orderBy("timestamp", "desc")
-      .onSnapshot(
-        (querySnapshot) => {
-          const orderList: Order[] = [];
-          querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            orderList.push({
-              id: doc.id,
-              productName: data.productName,
-              quantity: data.quantity,
-              price: data.price,
-              timestamp: data.timestamp,
-            });
-          });
-          setOrders(orderList);
-          setLoading(false);
-        },
-        (error) => {
-          setLoading(false);
-        }
-      );
+    // Subscribe to real-time orders
+    const unsubscribe = FirebaseService.subscribeToOrders((orderList) => {
+      setOrders(orderList);
+      setLoading(false);
+    });
+
     return () => unsubscribe();
   }, []);
 
   const handleDelete = (id: string) => {
-    firestore().collection("Orders").doc(id).delete();
+    FirebaseService.deleteOrder(id);
   };
 
-  const handleAddOrder = (order: {
-    productName: string;
-    quantity: string;
-    price: string;
-  }) => {
-    firestore()
-      .collection("Orders")
-      .add({
-        ...order,
-        timestamp: firestore.FieldValue.serverTimestamp(),
-      });
+  const handleAddOrder = (order: OrderFormData) => {
+    FirebaseService.addOrder(order);
   };
 
-  const handleEditOrder = (order: {
-    productName: string;
-    quantity: string;
-    price: string;
-  }) => {
+  const handleEditOrder = (order: OrderFormData) => {
     if (editOrderId) {
-      firestore().collection("Orders").doc(editOrderId).update(order);
+      FirebaseService.updateOrder(editOrderId, order);
     }
   };
 
@@ -132,6 +94,10 @@ export default function Page() {
     );
   };
 
+  if (loading) {
+    return <LoadingSpinner message="Loading orders..." />;
+  }
+
   return (
     <SafeAreaView className="bg-general-500 flex-1 p-4">
       <View className="flex-row justify-between items-center mb-4">
@@ -142,22 +108,18 @@ export default function Page() {
           className="w-11 h-11 rounded-full bg-blue-500"
         />
       </View>
-      {loading ? (
-        <Text>Loading...</Text>
-      ) : (
-        <FlatList
-          data={orders}
-          keyExtractor={(item) => item.id}
-          renderItem={renderOrder}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 100 }}
-          ListEmptyComponent={
-            <Text className="text-center text-gray-500 text-2xl">
-              No orders found.
-            </Text>
-          }
-        />
-      )}
+      <FlatList
+        data={orders}
+        keyExtractor={(item) => item.id}
+        renderItem={renderOrder}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        ListEmptyComponent={
+          <Text className="text-center text-gray-500 text-2xl">
+            No orders found.
+          </Text>
+        }
+      />
       <AddEditOrdersModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}

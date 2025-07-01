@@ -1,202 +1,203 @@
-import firestore from "@react-native-firebase/firestore";
+import DashboardCard from "@/components/DashboardCard";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import RecommendationCard from "@/components/RecommendationCard";
+import { AnalyticsService } from "@/services/analytics";
+import { FirebaseService } from "@/services/firebase";
+import { AnalyticsData, Order } from "@/types/order";
 import React, { useEffect, useState } from "react";
-import { SafeAreaView, Text, View } from "react-native";
-
-interface Order {
-  id: string;
-  productName: string;
-  quantity: string;
-  price: string;
-  timestamp: { seconds: number; nanoseconds: number };
-}
+import {
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 
 export default function HomeAnalytics() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    // Real-time listener for orders
-    const unsubscribe = firestore()
-      .collection("Orders")
-      .orderBy("timestamp", "desc")
-      .onSnapshot(
-        (querySnapshot) => {
-          const orderList: Order[] = [];
-          querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            orderList.push({
-              id: doc.id,
-              productName: data.productName,
-              quantity: data.quantity,
-              price: data.price,
-              timestamp: data.timestamp,
-            });
-          });
-          setOrders(orderList);
-          setLoading(false);
-        },
-        (error) => {
-          setLoading(false);
-        }
-      );
+    // Subscribe to real-time orders
+    const unsubscribe = FirebaseService.subscribeToOrders((orderList) => {
+      setOrders(orderList);
+      setLoading(false);
+    });
+
     return () => unsubscribe();
   }, []);
 
-  // --- Analytics Calculations ---
-  const totalRevenue = orders.reduce(
-    (sum, order) => sum + Number(order.price),
-    0
-  );
-
-  const productCounts: Record<string, number> = {};
-  orders.forEach((order) => {
-    if (order.productName in productCounts) {
-      productCounts[order.productName] += 1;
-    } else {
-      productCounts[order.productName] = 1;
+  useEffect(() => {
+    // Calculate analytics whenever orders change
+    if (orders.length > 0 || !loading) {
+      const calculatedAnalytics = AnalyticsService.calculateAnalytics(orders);
+      setAnalytics(calculatedAnalytics);
     }
-  });
-  const topProducts = Object.entries(productCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
+  }, [orders, loading]);
 
-  // Orders in the last hour
-  const now = new Date();
-  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-  const ordersLastHour = orders.filter((order) => {
-    const orderDate = order.timestamp?.seconds
-      ? new Date(order.timestamp.seconds * 1000)
-      : null;
-    return orderDate && orderDate >= oneHourAgo;
-  }).length;
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    // The real-time listener will automatically update the data
+    setTimeout(() => setRefreshing(false), 1000);
+  }, []);
 
-  // Revenue by day for the last 7 days
-  const days: string[] = [];
-  const revenueByDay: Record<string, number> = {};
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(now.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
-    days.push(key);
-    revenueByDay[key] = 0;
+  const recommendations = AnalyticsService.getRecommendations(orders);
+
+  if (loading) {
+    return <LoadingSpinner message="Loading analytics..." />;
   }
-  orders.forEach((order) => {
-    const orderDate = order.timestamp?.seconds
-      ? new Date(order.timestamp.seconds * 1000)
-      : null;
-    if (orderDate) {
-      const key = orderDate.toISOString().slice(0, 10);
-      if (key in revenueByDay) {
-        revenueByDay[key] += Number(order.price);
-      }
-    }
-  });
-
-
-  // --- Recommendation Engine ---
-  // 1. Products with fewer than 5 sales in the last 7 days
-  const sevenDaysAgo = new Date(now);
-  sevenDaysAgo.setDate(now.getDate() - 7);
-
-  // Count sales in the last 7 days
-  const salesLast7Days: Record<string, number> = {};
-  orders.forEach((order) => {
-    const orderDate = order.timestamp?.seconds
-      ? new Date(order.timestamp.seconds * 1000)
-      : null;
-    if (orderDate && orderDate >= sevenDaysAgo) {
-      if (order.productName in salesLast7Days) {
-        salesLast7Days[order.productName] += 1;
-      } else {
-        salesLast7Days[order.productName] = 1;
-      }
-    }
-  });
-  const productsToPromote = Object.entries(salesLast7Days)
-    .filter(([_, count]) => count < 5)
-    .map(([name]) => name);
-
-  // 2. Products contributing the highest revenue
-  const revenueByProduct: Record<string, number> = {};
-  orders.forEach((order) => {
-    if (order.productName in revenueByProduct) {
-      revenueByProduct[order.productName] += Number(order.price);
-    } else {
-      revenueByProduct[order.productName] = Number(order.price);
-    }
-  });
-  const topRevenueProducts = Object.entries(revenueByProduct)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
 
   return (
-    <SafeAreaView className="bg-general-500 flex-1 p-4">
-      <Text className="text-2xl font-bold mb-4 mt-4">Dashboard</Text>
-      <View className="bg-white rounded-lg shadow p-4 mb-6">
-        <Text className="text-xl font-bold mb-2">Analytics</Text>
-        {loading ? (
-          <Text>Loading...</Text>
-        ) : (
-          <>
-            <Text className="text-lg mb-1">
-              Total Revenue:{" "}
-              <Text className="font-bold text-primary-500">
-                ${totalRevenue.toFixed(2)}
-              </Text>
-            </Text>
-            <Text className="text-lg mb-1">
-              Orders in the Last Hour:{" "}
-              <Text className="font-bold text-primary-500">
-                {ordersLastHour}
-              </Text>
-            </Text>
-            <Text className="text-lg mb-1">Top-Selling Products:</Text>
-            {topProducts.length === 0 ? (
-              <Text className="text-gray-500">No products yet.</Text>
-            ) : (
-              topProducts.map(([name, count], idx) => (
-                <Text key={name} className="ml-2 text-md">
-                  {idx + 1}. {name}{" "}
-                  <Text className="text-gray-500">({count} sold)</Text>
-                </Text>
-              ))
-            )}
-            <Text className="text-lg font-bold mt-4 mb-2">
-              Revenue (Last 7 Days)
-            </Text>
+    <SafeAreaView className="bg-gray-50 flex-1">
+      <ScrollView
+        className="flex-1 p-4 mb-20"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <Text className="text-3xl font-bold text-gray-800 mb-6">Dashboard</Text>
 
-            <Text className="text-lg font-bold mt-4 mb-2">
-              Recommendation Engine
-            </Text>
-            <Text className="text-md font-semibold mb-1">
-              Products to Promote (fewer than 5 sales in last 7 days):
-            </Text>
-            {productsToPromote.length === 0 ? (
-              <Text className="text-gray-500 mb-2">
-                No underperforming products found.
+        {/* Analytics Cards */}
+        <View className="mb-6">
+          <Text className="text-xl font-semibold text-gray-700 mb-4">
+            Key Metrics
+          </Text>
+
+          <DashboardCard
+            title="Total Revenue"
+            value={analytics?.totalRevenue || 0}
+            subtitle="All time sales"
+            icon="cash"
+            color="#10B981"
+          />
+
+          <DashboardCard
+            title="Orders Last Hour"
+            value={analytics?.ordersLastHour || 0}
+            subtitle="Recent activity"
+            icon="time"
+            color="#3B82F6"
+          />
+
+          <DashboardCard
+            title="Total Orders"
+            value={orders.length}
+            subtitle="All time orders"
+            icon="list"
+            color="#8B5CF6"
+          />
+        </View>
+
+        {/* Top Products */}
+        <View className="mb-6">
+          <Text className="text-xl font-semibold text-gray-700 mb-4">
+            Top Selling Products
+          </Text>
+          {analytics?.topProducts && analytics.topProducts.length > 0 ? (
+            analytics.topProducts.map(([name, count], index) => (
+              <View
+                key={name}
+                className="bg-white rounded-xl p-4 shadow-sm shadow-neutral-300 mb-3"
+              >
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View className="w-8 h-8 rounded-full bg-blue-100 items-center justify-center mr-3">
+                      <Text className="text-blue-600 font-bold text-sm">
+                        {index + 1}
+                      </Text>
+                    </View>
+                    <Text className="text-lg font-medium text-gray-800">
+                      {name}
+                    </Text>
+                  </View>
+                  <Text className="text-gray-600 font-semibold">
+                    {count} sold
+                  </Text>
+                </View>
+              </View>
+            ))
+          ) : (
+            <View className="bg-white rounded-xl p-4 shadow-sm shadow-neutral-300">
+              <Text className="text-gray-500 text-center">
+                No products sold yet
               </Text>
-            ) : (
-              productsToPromote.map((name) => (
-                <Text key={name} className="ml-2 text-md text-yellow-700">
-                  - {name}
-                </Text>
-              ))
+            </View>
+          )}
+        </View>
+
+        {/* Recommendations */}
+        <View className="mb-6">
+          <Text className="text-xl font-semibold text-gray-700 mb-4">
+            AI Recommendations
+          </Text>
+
+          <RecommendationCard
+            title="Products to Promote"
+            items={recommendations.productsToPromote}
+            type="promote"
+            emptyMessage="All products performing well"
+          />
+
+          <RecommendationCard
+            title="Top Revenue Products"
+            items={recommendations.topRevenueProducts.map(
+              ([name, revenue]) => `${name} ($${revenue.toFixed(2)})`
             )}
-            <Text className="text-md font-semibold mt-3 mb-1">
-              Top Revenue Products:
-            </Text>
-            {topRevenueProducts.length === 0 ? (
-              <Text className="text-gray-500">No products found.</Text>
-            ) : (
-              topRevenueProducts.map(([name, revenue], idx) => (
-                <Text key={name} className="ml-2 text-md text-green-700">
-                  {idx + 1}. {name} (${revenue.toFixed(2)})
-                </Text>
-              ))
-            )}
-          </>
-        )}
-      </View>
+            type="top"
+            emptyMessage="No revenue data available"
+          />
+
+          <RecommendationCard
+            title="Underperforming Products"
+            items={recommendations.underperformingProducts}
+            type="underperforming"
+            emptyMessage="All products have recent sales"
+          />
+        </View>
+
+        {/* Revenue Chart Placeholder */}
+        <View className="mb-6">
+          <Text className="text-xl font-semibold text-gray-700 mb-4">
+            Revenue Trend (Last 7 Days)
+          </Text>
+          <View className="bg-white rounded-xl p-4 shadow-sm shadow-neutral-300">
+            <View className="flex-row justify-between items-center">
+              {analytics?.revenueByDay &&
+                Object.entries(analytics.revenueByDay).map(
+                  ([date, revenue]) => (
+                    <View key={date} className="items-center">
+                      <Text className="text-xs text-gray-500 mb-1">
+                        {new Date(date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </Text>
+                      <View
+                        className="w-8 rounded-t-sm"
+                        style={{
+                          height: Math.max(
+                            20,
+                            (revenue /
+                              Math.max(
+                                ...Object.values(analytics.revenueByDay)
+                              )) *
+                              60
+                          ),
+                          backgroundColor: revenue > 0 ? "#10B981" : "#E5E7EB",
+                        }}
+                      />
+                      <Text className="text-xs text-gray-600 mt-1">
+                        ${revenue.toFixed(0)}
+                      </Text>
+                    </View>
+                  )
+                )}
+            </View>
+          </View>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
