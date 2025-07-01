@@ -25,7 +25,7 @@ const SignIn = () => {
   }, [form]);
 
   return (
-    <SafeAreaView className="flex bg-white">
+    <SafeAreaView className="flex-1 bg-white">
       <ScrollView className=" bg-white">
         <View className="flex-1 bg-white">
           <View className="relative w-full h-[250px]">
