@@ -1,7 +1,6 @@
+import { icons } from "@/constants";
 import { Tabs } from "expo-router";
 import { Image, ImageSourcePropType, View } from "react-native";
-
-import { icons } from "@/constants";
 
 const TabIcon = ({
   source,
@@ -12,7 +11,9 @@ const TabIcon = ({
 }) => (
   <View className={`flex flex-row justify-center items-center rounded-full`}>
     <View
-      className={`rounded-full w-12 h-12 items-center justify-center ${focused ? "bg-general-400" : ""}`}
+      className={`rounded-full w-12 h-12 items-center justify-center ${
+        focused ? "bg-general-400" : ""
+      }`}
     >
       <Image
         source={source}
@@ -59,22 +60,12 @@ export default function Layout() {
         }}
       />
       <Tabs.Screen
-        name="rides"
+        name="orders"
         options={{
-          title: "Rides",
+          title: "Orders",
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <TabIcon source={icons.list} focused={focused} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: "Chat",
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon source={icons.chat} focused={focused} />
           ),
         }}
       />
