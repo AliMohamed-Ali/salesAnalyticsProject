@@ -5,13 +5,8 @@ import { AnalyticsService } from "@/services/analytics";
 import { FirebaseService } from "@/services/firebase";
 import { AnalyticsData, Order } from "@/types/order";
 import React, { useEffect, useState } from "react";
-import {
-  RefreshControl,
-  SafeAreaView,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { RefreshControl, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeAnalytics() {
   const [orders, setOrders] = useState<Order[]>([]);

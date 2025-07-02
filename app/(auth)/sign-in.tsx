@@ -9,7 +9,6 @@ import {
 import { Link, router } from "expo-router";
 import { useCallback, useState } from "react";
 import { Image, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 const SignIn = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -25,52 +24,48 @@ const SignIn = () => {
   }, [form]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className=" bg-white">
-        <View className="flex-1 bg-white">
-          <View className="relative w-full h-[250px]">
-            <Image source={images.signUpCar} className="z-0 w-full h-[250px]" />
-            <Text className="text-2xl text-black font-JakartaSemiBold absolute bottom-5 left-5">
-              Welcome 👋
-            </Text>
-          </View>
-          <View className="p-5">
-            <InputField
-              label="Email"
-              placeholder="Enter your email"
-              value={form.email}
-              onChangeText={(value) => setForm({ ...form, email: value })}
-              icon={icons.email}
-              autoCapitalize="none"
-            />
-            <InputField
-              label="Password"
-              placeholder="Enter your password"
-              value={form.password}
-              secureTextEntry={true}
-              onChangeText={(value) => setForm({ ...form, password: value })}
-              icon={icons.lock}
-            />
-            {error && (
-              <Text className="text-red-500 mt-2 text-sm">{error}</Text>
-            )}
-            <CustomButton
-              title="Log In"
-              onPress={onSignInPress}
-              className="mt-6"
-            />
-            <OAuth />
-            <Link
-              href="/sign-up"
-              className="text-lg text-center mt-10 text-general-200"
-            >
-              <Text>Don&apos;t have an account? </Text>
-              <Text className="text-primary-500">Sign Up</Text>
-            </Link>
-          </View>
+    <ScrollView className="flex-1 bg-white">
+      <View className="flex-1 bg-white">
+        <View className="relative w-full h-[250px]">
+          <Image source={images.signUpImage} className="z-0 w-full h-[250px]" />
+          <Text className="text-2xl text-white font-JakartaSemiBold absolute bottom-5 left-5">
+            Welcome 👋
+          </Text>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+        <View className="p-5">
+          <InputField
+            label="Email"
+            placeholder="Enter your email"
+            value={form.email}
+            onChangeText={(value) => setForm({ ...form, email: value })}
+            icon={icons.email}
+            autoCapitalize="none"
+          />
+          <InputField
+            label="Password"
+            placeholder="Enter your password"
+            value={form.password}
+            secureTextEntry={true}
+            onChangeText={(value) => setForm({ ...form, password: value })}
+            icon={icons.lock}
+          />
+          {error && <Text className="text-red-500 mt-2 text-sm">{error}</Text>}
+          <CustomButton
+            title="Log In"
+            onPress={onSignInPress}
+            className="mt-6"
+          />
+          <OAuth />
+          <Link
+            href="/sign-up"
+            className="text-lg text-center mt-10 text-general-200"
+          >
+            <Text>Don&apos;t have an account? </Text>
+            <Text className="text-primary-500">Sign Up</Text>
+          </Link>
+        </View>
+      </View>
+    </ScrollView>
   );
 };
 

@@ -82,12 +82,12 @@ export default function Page() {
           <CustomButton
             IconLeft={() => <AntDesign name="edit" size={18} color="black" />}
             onPress={() => openEditModal(item)}
-            className="w-11 h-11 rounded-full bg-neutral-200"
+            className="w-10 h-10 rounded-full bg-neutral-200"
           />
           <CustomButton
             onPress={() => handleDelete(item.id)}
             IconLeft={() => <AntDesign name="delete" size={18} color="white" />}
-            className="w-11 h-11 rounded-full bg-red-500"
+            className="w-10 h-10 rounded-full bg-red-500"
           />
         </View>
       </View>
@@ -105,7 +105,7 @@ export default function Page() {
         <CustomButton
           onPress={openAddModal}
           IconLeft={() => <AntDesign name="plus" size={18} color="white" />}
-          className="w-11 h-11 rounded-full bg-blue-500"
+          className="w-10 h-10 rounded-full bg-blue-500"
         />
       </View>
       <FlatList
